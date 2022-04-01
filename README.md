@@ -16,6 +16,14 @@ local cache 需求
 
 ```aidl
 // 非指针类型如int32 uint32 不会被分配到堆上，从而可以避免被GC扫到
+// 通常情况下map中使用string等指针类型的数据结构有助于简化开发成本，
+// 同时也能解决大部分问题。但是在数百万甚至千万级别的内存缓存中，GC
+// 的周期回收时间可以达到秒级
+// 因此我们需要尽量避免map中存在指针，解决的方法可以采用二级索引的思想
+// map[int]value value存放的为真正数据在内存中的offset，我们插入一
+// 个<"hello","world">的KV值，首先先将hello哈希成一串整形数字，再
+// 将world转化为byte存储在我们申请的内存中，由于world占用5个byte，
+// 所以offset=5
 // slice 的gc时间远远快于map， 而map存储指针是最慢的
 ```
 ## bigcache
@@ -44,3 +52,4 @@ KV数据进来后首先会根据k进行计算其hash值，然后根据hash值来
 ref:
 
 [Go语言的实时GC——理论与实践](https://segmentfault.com/a/1190000010753702?_ea=2426880)
+[Golang 中map与GC“纠缠不清”的关系](https://blog.csdn.net/weixin_38683995/article/details/113522023)
