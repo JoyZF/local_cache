@@ -64,13 +64,19 @@ func (rb *RingBuf) ReadAt(p []byte, off int64) (n int, err error) {
 		err = ErrOutOfRange
 		return
 	}
+	// 读的起始位置
 	readOff := rb.getDataOff(off)
+	// 读的结束位置
 	readEnd := readOff + int(rb.end-off)
+	// readEnd 小于len 读readOff - readEnd
 	if readEnd <= len(rb.data) {
 		n = copy(p, rb.data[readOff:readEnd])
 	} else {
+		// 如果大于len 分两端读取
+		// 第一段从readOff 到最后
 		n = copy(p, rb.data[readOff:])
 		if n < len(p) {
+			// 第二段从开始到 读了n个字符 剩余从头部读n之后剩余的数据
 			n += copy(p[n:], rb.data[:readEnd-len(rb.data)])
 		}
 	}
@@ -121,15 +127,18 @@ func (rb *RingBuf) Write(p []byte) (n int, err error) {
 		return
 	}
 	for n < len(p) {
+		// 从index 开始往后写，end 一直增加
 		written := copy(rb.data[rb.index:], p[n:])
 		rb.end += int64(written)
 		n += written
 		rb.index += written
+		// 如果index 大于data的长度 从头开始写
 		if rb.index >= len(rb.data) {
 			rb.index -= len(rb.data)
 		}
 	}
 	if int(rb.end-rb.begin) > len(rb.data) {
+		// 重置begin
 		rb.begin = rb.end - int64(len(rb.data))
 	}
 	return
@@ -143,8 +152,10 @@ func (rb *RingBuf) WriteAt(p []byte, off int64) (n int, err error) {
 	writeOff := rb.getDataOff(off)
 	writeEnd := writeOff + int(rb.end-off)
 	if writeEnd <= len(rb.data) {
+		// 一段写
 		n = copy(rb.data[writeOff:writeEnd], p)
 	} else {
+		// 两端写
 		n = copy(rb.data[writeOff:], p)
 		if n < len(p) {
 			n += copy(rb.data[:writeEnd-len(rb.data)], p[n:])

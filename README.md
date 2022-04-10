@@ -49,7 +49,16 @@ KV数据进来后首先会根据k进行计算其hash值，然后根据hash值来
 ## offheap
 ![](_doc/offheap.png)
 
+- 痛点
+- 实现方案 避免GC （GC分析） 高并发思路 数据分片
+- mutex和RW mutex
+- benchmark压测
+- 源码解析
+- 适用场景
+- KV数据库扩展
+
 ref:
 
 [Go语言的实时GC——理论与实践](https://segmentfault.com/a/1190000010753702?_ea=2426880)
 [Golang 中map与GC“纠缠不清”的关系](https://blog.csdn.net/weixin_38683995/article/details/113522023)
+

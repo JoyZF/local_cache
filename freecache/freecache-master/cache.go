@@ -38,14 +38,18 @@ func NewCache(size int) (cache *Cache) {
 
 // NewCacheCustomTimer returns new cache with custom timer.
 func NewCacheCustomTimer(size int, timer Timer) (cache *Cache) {
+	// buf 最小512k
 	if size < minBufSize {
 		size = minBufSize
 	}
 	if timer == nil {
+		// 重写了time
 		timer = defaultTimer{}
 	}
 	cache = new(Cache)
+	// 256 个segment
 	for i := 0; i < segmentCount; i++ {
+		// 初始化每个segment，大小最少为512k / 256 = 2k
 		cache.segments[i] = newSegment(size/segmentCount, i, timer)
 	}
 	return
@@ -57,7 +61,7 @@ func NewCacheCustomTimer(size int, timer Timer) (cache *Cache) {
 // but it can be evicted when cache is full.
 func (cache *Cache) Set(key, value []byte, expireSeconds int) (err error) {
 	hashVal := hashFunc(key)
-	// 取余操作
+	// 位运算
 	segID := hashVal & segmentAndOpVal
 	// 切片加锁
 	cache.locks[segID].Lock()
