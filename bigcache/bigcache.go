@@ -84,7 +84,7 @@ func newBigCache(config Config, clock clock) (*BigCache, error) {
 	} else {
 		onRemove = cache.notProvidedOnRemove
 	}
-
+	// 初始化每个shard
 	for i := 0; i < config.Shards; i++ {
 		cache.shards[i] = initNewShard(config, onRemove, clock)
 	}
@@ -224,6 +224,7 @@ func (c *BigCache) cleanUp(currentTimestamp uint64) {
 }
 
 func (c *BigCache) getShard(hashedKey uint64) (shard *cacheShard) {
+	// hashedKey 取余   shardMask = uint64(config.Shards - 1)
 	return c.shards[hashedKey&c.shardMask]
 }
 

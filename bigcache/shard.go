@@ -16,7 +16,9 @@ type Metadata struct {
 }
 
 type cacheShard struct {
+	// 索引
 	hashmap     map[uint64]uint32
+	// 存储数据
 	entries     queue.BytesQueue
 	lock        sync.RWMutex // 使用读写锁
 	entryBuffer []byte
@@ -121,10 +123,11 @@ func (s *cacheShard) getValidWrapEntry(key string, hashedKey uint64) ([]byte, er
 }
 
 func (s *cacheShard) set(key string, hashedKey uint64, entry []byte) error {
+	// 获取时间戳
 	currentTimestamp := uint64(s.clock.Epoch())
-
+	// 加锁
 	s.lock.Lock()
-
+	// 如果已经存在 覆盖
 	if previousIndex := s.hashmap[hashedKey]; previousIndex != 0 {
 		if previousEntry, err := s.entries.Get(int(previousIndex)); err == nil {
 			resetKeyFromEntry(previousEntry)
@@ -132,14 +135,15 @@ func (s *cacheShard) set(key string, hashedKey uint64, entry []byte) error {
 			delete(s.hashmap, hashedKey)
 		}
 	}
-
+	// 读取最久的entry 删除 FIFO
 	if oldestEntry, err := s.entries.Peek(); err == nil {
 		s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
 	}
-
+	// 包装entry   格式：ts|hash|len|key|entry
 	w := wrapEntry(currentTimestamp, hashedKey, key, entry, &s.entryBuffer)
 
 	for {
+		// index 写入位置 加入索引map
 		if index, err := s.entries.Push(w); err == nil {
 			s.hashmap[hashedKey] = uint32(index)
 			s.lock.Unlock()

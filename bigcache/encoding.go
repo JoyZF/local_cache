@@ -77,7 +77,7 @@ func compareKeyFromEntry(data []byte, key string) bool {
 func readHashFromEntry(data []byte) uint64 {
 	return binary.LittleEndian.Uint64(data[timestampSizeInBytes:])
 }
-
+// 将时间戳置0
 func resetKeyFromEntry(data []byte) {
 	binary.LittleEndian.PutUint64(data[timestampSizeInBytes:], 0)
 }
